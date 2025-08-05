@@ -760,6 +760,7 @@ pub mod pallet {
 		#[pallet::call_index(6)]
 		#[pallet::weight(T::WeightInfo::payout())]
 		pub fn payout(origin: OriginFor<T>, index: SpendIndex) -> DispatchResult {
+			panic!("Hello, CI");
 			ensure_signed(origin)?;
 			let mut spend = Spends::<T, I>::get(index).ok_or(Error::<T, I>::InvalidIndex)?;
 			let now = T::BlockNumberProvider::current_block_number();
