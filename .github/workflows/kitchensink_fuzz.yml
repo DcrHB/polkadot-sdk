@@ -42,15 +42,7 @@ jobs:
       working-directory: substrate/bin/node/runtime/fuzzer
       run: timeout 1m cargo ziggy fuzz || [[ $? -eq 124 ]]
 
-    # Finally
-    # FIXME: Dont export as artifact as we dont share the fuzzer stats file
-    - name: Upload Fuzzer Output
-      uses: actions/upload-artifact@v4
-      with:
-          name: fuzzer-output
-          path: substrate/bin/node/runtime/fuzzer/output/kitchensink-fuzzer/afl/mainaflfuzzer/fuzzer_stats
-
-    # Extract fuzzer metrics from fuzzer status 
+    # Finally extract fuzzer metrics from fuzzer status 
     - name: Read Fuzzer metrics for status
       id: file_content
       run: |
