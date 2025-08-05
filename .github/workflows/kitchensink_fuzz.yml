@@ -65,10 +65,13 @@ jobs:
           github-token: ${{secrets.GITHUB_TOKEN}}
           script: |
             const comment = `
-            Total Fuzzing Time: ${process.env.FUZZ_TIME}
-            No. of Crashes found: ${process.env.SAVED_CRASHES}
-            Edges Found: ${process.env.EDGES_FOUND}
-            Total Edges: ${process.env.TOTAL_EDGES}
+            **Total Fuzzing Time (Duration)** : ${process.env.FUZZ_TIME}
+            **No. of Crashes found** : ${process.env.SAVED_CRASHES}
+            **Explored Edges** : ${process.env.EDGES_FOUND}
+            **Total Edges** : ${process.env.TOTAL_EDGES}
+            **Coverage** : ${(parseInt(process.env.EDGES_FOUND)/parseInt(process.env.TOTAL_EDGES)*100).toFixed(2)}%
+            **Coverage Report** : Download here
+            **Crash Report** : Refer here
             `;
             github.issues.createComment({
               issue_number: context.issue.number,
