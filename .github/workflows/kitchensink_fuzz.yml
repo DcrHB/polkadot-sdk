@@ -51,19 +51,46 @@ jobs:
       working-directory: substrate/bin/node/runtime/fuzzer
       run: timeout 15m cargo ziggy fuzz || [[ $? -eq 124 ]]
 
-    # Finally
-    - name: Upload Fuzzer Output
-      uses: actions/upload-artifact@v4
-      with:
-          name: fuzzer-output
-          path: substrate/bin/node/runtime/fuzzer/output/kitchensink-fuzzer/afl/mainaflfuzzer/fuzzer_stats
+    # Finally extract fuzzer metrics from fuzzer status 
+    - name: Read Fuzzer metrics for status
+      id: file_content
+      run: |
+            keys=("fuzz_time" "saved_crashes" "edges_found" "total_edges")
+            for key in ${keys[@]}; do
+              value=$(cat substrate/bin/node/runtime/fuzzer/output/kitchensink-fuzzer/afl/mainaflfuzzer/fuzzer_stats | grep $key | awk -F: '{print $2}')
+              echo "${key}=${value}" | tee -a $GITHUB_OUTPUT
+            done
 
-    - name: Get Coverage 
+    - name: Get Coverage Report
       run: |
         # TODO: 
         # This is a placeholder to get gcov report
 
-    - name: Post the coverage report in PR
-      run: |
-        # TODO: 
-        # This is a placeholder to post the coverage report in PR
+    - name: Post comment on the PR
+      # FIXME: Remove gurard condition once the action is finlaised to only for PR
+      if: github.event_name == 'pull_request'
+      uses: actions/github-script@v3
+      with:
+          github-token: ${{secrets.GITHUB_TOKEN}}
+          script: |
+            const comment = `
+            **Total Fuzzing Time (Duration)** : ${process.env.FUZZ_TIME}
+            **No. of Crashes found** : ${process.env.SAVED_CRASHES}
+            **Explored Edges** : ${process.env.EDGES_FOUND}
+            **Total Edges** : ${process.env.TOTAL_EDGES}
+            **Coverage** : ${(parseInt(process.env.EDGES_FOUND)/parseInt(process.env.TOTAL_EDGES)*100).toFixed(2)}%
+            **Coverage Report** : Download here
+            **Crash Report** : Refer here
+            `;
+            github.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: comment
+            });
+      env:
+        FUZZ_TIME: ${{ steps.file_content.outputs.fuzz_time }}
+        SAVED_CRASHES: ${{ steps.file_content.outputs.saved_crashes }}
+        EDGES_FOUND: ${{ steps.file_content.outputs.edges_found }}
+        TOTAL_EDGES: ${{ steps.file_content.outputs.total_edges }}
+  
