@@ -38,7 +38,7 @@ jobs:
     # Fuzz
     - uses: actions/cache@v4
       with:
-        path: substrate/bin/node/runtime/fuzzer/output/kitchensink-fuzzer/corpus
+        path: substrate/bin/node/runtime/fuzzer/corpus
         key: kitchensink-corpus
     - name: Fuzz for 15 minutes
       env:
@@ -48,7 +48,11 @@ jobs:
         AFLRS_REQUIRE_PLUGINS: true
         AFL_LLVM_ALLOWLIST: $(pwd)/allowlist.txt
       working-directory: substrate/bin/node/runtime/fuzzer
-      run: timeout 15m cargo ziggy fuzz -j 4 --no-honggfuzz || [[ $? -eq 124 ]]
+      run: timeout 15m cargo ziggy fuzz -j 4 --no-honggfuzz -i corpus || [[ $? -eq 124 ]]
+    
+    - name: Move new corpus for caching
+      working-directory: substrate/bin/node/runtime/fuzzer
+      run: mv corpus corpus_old && mv output/kitchensink-fuzzer/afl/mainaflfuzzer/queue corpus
 
     # Finally extract fuzzer metrics from fuzzer status 
     - name: Read Fuzzer metrics for status
