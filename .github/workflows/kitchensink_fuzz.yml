@@ -57,10 +57,12 @@ jobs:
     # Finally extract fuzzer metrics from fuzzer status 
     - name: Read Fuzzer metrics for status
       id: file_content
+      working-directory: substrate/bin/node/runtime/fuzzer
       run: |
-            keys=("fuzz_time" "saved_crashes" "edges_found" "total_edges")
+            whatsup=${cargo afl whatsup -s -m output/kitchensink-fuzzer/afl/}
+            keys=("time" "saved" "reached")
             for key in ${keys[@]}; do
-              value=$(cat substrate/bin/node/runtime/fuzzer/output/kitchensink-fuzzer/afl/mainaflfuzzer/fuzzer_stats | grep $key | awk -F: '{print $2}')
+              value=$(echo $whatsup | grep $key | awk -F: '{print $2}')
               echo "${key}=${value}" | tee -a $GITHUB_OUTPUT
             done
 
@@ -79,11 +81,9 @@ jobs:
             const comment = `
             **Total Fuzzing Time (Duration)** : ${process.env.FUZZ_TIME}
             **No. of Crashes found** : ${process.env.SAVED_CRASHES}
-            **Explored Edges** : ${process.env.EDGES_FOUND}
-            **Total Edges** : ${process.env.TOTAL_EDGES}
-            **Coverage** : ${(parseInt(process.env.EDGES_FOUND)/parseInt(process.env.TOTAL_EDGES)*100).toFixed(2)}%
-            **Coverage Report** : Download here
-            **Crash Report** : Refer here
+            **Coverage** : ${process.env.COVERAGE}
+            **Coverage Report** : [Download here](./)
+            **Crash Report** : [Read here](./)
             `;
             github.issues.createComment({
               issue_number: context.issue.number,
@@ -92,8 +92,7 @@ jobs:
               body: comment
             });
       env:
-        FUZZ_TIME: ${{ steps.file_content.outputs.fuzz_time }}
-        SAVED_CRASHES: ${{ steps.file_content.outputs.saved_crashes }}
-        EDGES_FOUND: ${{ steps.file_content.outputs.edges_found }}
-        TOTAL_EDGES: ${{ steps.file_content.outputs.total_edges }}
+        FUZZ_TIME: ${{ steps.file_content.outputs.time }}
+        SAVED_CRASHES: ${{ steps.file_content.outputs.saved }}
+        COVERAGE: ${{ steps.file_content.outputs.reached }}
   
