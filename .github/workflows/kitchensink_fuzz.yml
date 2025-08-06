@@ -39,6 +39,8 @@ jobs:
         SKIP_WASM_BUILD: true
         AFL_I_DONT_CARE_ABOUT_MISSING_CRASHES: true
         AFL_SKIP_CPUFREQ: true
+        AFLRS_REQUIRE_PLUGINS: true
+        AFL_LLVM_ALLOWLIST: $(pwd)/allowlist.txt
       working-directory: substrate/bin/node/runtime/fuzzer
       run: timeout 15m cargo ziggy fuzz -j 4 --no-honggfuzz || [[ $? -eq 124 ]]
 
