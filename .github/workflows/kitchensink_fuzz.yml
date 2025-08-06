@@ -6,7 +6,8 @@ on:
 
 jobs:
   fuzz:
-    runs-on: ubuntu-25.04
+    runs-on: ubuntu-latest
+    # runs-on: ubuntu-25.04
 
     steps:
     # Setup
@@ -17,7 +18,8 @@ jobs:
         key: dot-cargo
     # Workaround to afl config bug
     - run: sudo apt update
-    - run: sudo apt install llvm-20-dev
+    - run: sudo apt install llvm-dev
+    - run: sudo ln -s /usr/bin/llvm-dev /usr/bin/llvm-dev-20
     - run: rustup default nightly
     - run: cargo install ziggy cargo-afl
     - run: cargo afl config --build --force --plugins
