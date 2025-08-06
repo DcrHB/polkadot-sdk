@@ -79,11 +79,13 @@ jobs:
           github-token: ${{secrets.GITHUB_TOKEN}}
           script: |
             const comment = `
-            **Total Fuzzing Time (Duration)** : ${process.env.FUZZ_TIME}
-            **No. of Crashes found** : ${process.env.SAVED_CRASHES}
-            **Coverage** : ${process.env.COVERAGE}
-            **Coverage Report** : [Download here](./)
-            **Crash Report** : [Read here](./)
+            ## 🐛 Fuzzing Report
+            
+            ⏱️ **Total Fuzzing Time (Duration)** : ${process.env.FUZZ_TIME}
+            💥 **No. of Crashes found** : ${process.env.SAVED_CRASHES}
+            📊 **Coverage** : ${process.env.COVERAGE}
+            📋 **Coverage Report** : [Download here](./)
+            🔍 **Crash Report** : [Read here](./)
             `;
             github.issues.createComment({
               issue_number: context.issue.number,
