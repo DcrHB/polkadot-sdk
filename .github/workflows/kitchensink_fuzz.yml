@@ -46,7 +46,7 @@ jobs:
         AFLRS_REQUIRE_PLUGINS: true
         AFL_LLVM_ALLOWLIST: $(pwd)/allowlist.txt
       working-directory: substrate/bin/node/runtime/fuzzer
-      run: timeout 15m cargo ziggy fuzz -j 4 --no-honggfuzz || [[ $? -eq 124 ]]
+      run: timeout 15m cargo ziggy fuzz || [[ $? -eq 124 ]]
 
     # Finally
     - name: Upload Fuzzer Output
