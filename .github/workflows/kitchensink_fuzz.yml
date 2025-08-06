@@ -6,7 +6,7 @@ on:
 
 jobs:
   fuzz:
-    runs-on: ubuntu-plucky
+    runs-on: ubuntu-25.04
 
     steps:
     # Setup
