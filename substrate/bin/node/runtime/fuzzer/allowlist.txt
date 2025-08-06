@@ -1,1 +1,1 @@
-src:*treasury*
+src:*pallet_treasury*
