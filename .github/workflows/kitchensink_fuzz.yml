@@ -1,7 +1,6 @@
 name: Kitchensink Fuzz
 
 on:
-    push:
     pull_request:
 
 jobs:
