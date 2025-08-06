@@ -34,13 +34,13 @@ jobs:
       with:
         path: substrate/bin/node/runtime/fuzzer/output/kitchensink-fuzzer/corpus
         key: kitchensink-corpus
-    - name: Fuzz for 5 minutes
+    - name: Fuzz for 15 minutes
       env:
         SKIP_WASM_BUILD: true
         AFL_I_DONT_CARE_ABOUT_MISSING_CRASHES: true
         AFL_SKIP_CPUFREQ: true
       working-directory: substrate/bin/node/runtime/fuzzer
-      run: timeout 5m cargo ziggy fuzz || [[ $? -eq 124 ]]
+      run: timeout 15m cargo ziggy fuzz -j 4 --no-honggfuzz || [[ $? -eq 124 ]]
 
     # Finally
     - name: Upload Fuzzer Output

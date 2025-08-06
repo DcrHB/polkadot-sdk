@@ -46,7 +46,7 @@ fn generate_genesis(accounts: &[AccountId]) -> Storage {
         NominationPoolsConfig, PoolAssetsConfig, RuntimeGenesisConfig, SafeModeConfig,
         SessionConfig, SessionKeys, SocietyConfig, StakingConfig, SudoConfig, SystemConfig,
         TechnicalCommitteeConfig, TechnicalMembershipConfig, TransactionPaymentConfig,
-        TransactionStorageConfig, TreasuryConfig, TxPauseConfig, VestingConfig,
+        TransactionStorageConfig, TreasuryConfig, TxPauseConfig, VestingConfig, AssetRate
     };
     use pallet_grandpa::AuthorityId as GrandpaId;
     use pallet_im_online::sr25519::AuthorityId as ImOnlineId;
@@ -177,6 +177,12 @@ fn generate_genesis(accounts: &[AccountId]) -> Storage {
             },
         )
         .unwrap();
+        use frame_support::traits::fungible::NativeOrWithId;
+        AssetRate::create(
+            RuntimeOrigin::root(),
+            NativeOrWithId::Native.into(),
+            1.into()
+        ).unwrap()
         /*
         // WIP: found the society before each input
         RuntimeCall::Sudo(pallet_sudo::Call::sudo {
@@ -316,7 +322,7 @@ fn process_input(accounts: &[AccountId], genesis: &Storage, data: &[u8]) {
                 // We end the current block
                 finalize_block(elapsed);
 
-                block += u32::from(lapse) * 393; // 393 * 256 = 100608 which nearly corresponds to a week
+                block += u32::from(lapse); // * 393; // 393 * 256 = 100608 which nearly corresponds to a week
                 weight = Weight::zero();
                 elapsed = Duration::ZERO;
 
@@ -331,24 +337,29 @@ fn process_input(accounts: &[AccountId], genesis: &Storage, data: &[u8]) {
                 continue;
             }
 
-            let origin = accounts[origin as usize % accounts.len()].clone();
+            let account_origin = accounts[origin as usize % accounts.len()].clone();
 
             // We do not continue if the origin account does not have a free balance
-            let account = Account::<Runtime>::get(&origin);
+            let account = Account::<Runtime>::get(&account_origin);
             if account.data.free == 0 {
                 #[cfg(not(feature = "fuzzing"))]
                 println!("\n    origin {origin:?} does not have free balance, skipping");
                 continue;
             }
 
+            let runtime_origin = match origin {
+                0 => RuntimeOrigin::root(),
+                _ => RuntimeOrigin::signed(account_origin),
+            };
+
             #[cfg(not(feature = "fuzzing"))]
-            println!("\n    origin:     {origin:?}");
+            println!("\n    origin:     {:?}", runtime_origin.caller);
             #[cfg(not(feature = "fuzzing"))]
             println!("    call:       {extrinsic:?}");
 
             let now = Instant::now(); // We get the current time for timing purposes.
             #[allow(unused_variables)]
-            let res = extrinsic.dispatch(RuntimeOrigin::signed(origin));
+            let res = extrinsic.dispatch(runtime_origin);
             elapsed += now.elapsed();
 
             #[cfg(not(feature = "fuzzing"))]
