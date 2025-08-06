@@ -15,6 +15,7 @@ jobs:
       with:
         path: ~/.cargo/
         key: dot-cargo
+    - run: rustup default nightly
     - run: cargo install ziggy cargo-afl
     - run: cargo afl config --build --force --plugins
 
