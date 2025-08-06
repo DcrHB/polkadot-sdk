@@ -16,7 +16,7 @@ jobs:
         path: ~/.cargo/
         key: dot-cargo
     # Workaround to afl config bug
-    - run: ln -s /usr/bin/llvm-config /usr/bin/llvm-config-20
+    - run: sudo ln -s /usr/bin/llvm-config /usr/bin/llvm-config-20
     - run: rustup default nightly
     - run: cargo install ziggy cargo-afl
     - run: cargo afl config --build --force --plugins
