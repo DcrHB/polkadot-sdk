@@ -52,7 +52,7 @@ jobs:
     
     - name: Move new corpus for caching
       working-directory: substrate/bin/node/runtime/fuzzer
-      run: mv corpus corpus_old && mv output/kitchensink-fuzzer/afl/mainaflfuzzer/queue corpus
+      run: mkdir -p corpus && mv corpus corpus_old && mv output/kitchensink-fuzzer/afl/mainaflfuzzer/queue corpus
 
     # Finally extract fuzzer metrics from fuzzer status 
     - name: Read Fuzzer metrics for status
