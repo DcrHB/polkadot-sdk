@@ -59,7 +59,7 @@ jobs:
       id: file_content
       working-directory: substrate/bin/node/runtime/fuzzer
       run: |
-            whatsup=${cargo afl whatsup -s -m output/kitchensink-fuzzer/afl/}
+            whatsup=$(cargo afl whatsup -s -m output/kitchensink-fuzzer/afl/)
             keys=("time" "saved" "reached")
             for key in ${keys[@]}; do
               value=$(echo $whatsup | grep $key | awk -F: '{print $2}')
