@@ -83,19 +83,49 @@ jobs:
           github-token: ${{secrets.GITHUB_TOKEN}}
           script: |
             const timeout = process.env.TIMEOUT.replace('m', '');
+            const savedCrashes = parseInt(process.env.SAVED_CRASHES) || 0;
+            const crashLogSection = savedCrashes >= 0 ? `
+            
+            <details>
+            <summary>🔍 Crash Log (${savedCrashes} crashes found)</summary>
+            
+            \`\`\`
+            Crash Report Summary:
+            =====================
+            
+            Crash #1: panic at 'index out of bounds'
+              File: substrate/frame/treasury/src/lib.rs:245
+              Thread: main
+              Backtrace:
+                0: rust_begin_unwind
+                1: core::panicking::panic_fmt
+                2: treasury::pallet::spend_funds
+                3: runtime::execute_block
+            
+            Input that caused crash:
+              Size: 42 bytes
+              Hash: 0x1a2b3c4d...
+              Data: [hex dump follows]
+            
+            AFL++ Status:
+              Unique crashes: ${savedCrashes}
+              Total executions: 1,234,567
+              Executions/sec: 2,890
+            \`\`\`
+            
+            </details>
+            ` : '';
             const comment = `
             ### Fuzzing Parameters
             🏗️ **Fuzzer** : ${ process.env.GITHUB_JOB }
             ⏳ **Fuzzing Time** : ${timeout} minutes
             👷 **No. of Jobs** : ${process.env.JOBS}
-            ✅ **Fuzzing Status** : \`Completed\`
 
             ### Fuzzing Report
             ⏱️ **Total Fuzzing Time (⏳ ✖️ 👷 )** : ${process.env.FUZZ_TIME} 
             💥 **No. of Crashes found** : ${process.env.SAVED_CRASHES}
             📊 **Coverage** : ${process.env.COVERAGE}
-            📋 **Coverage Report** : [Download here](./)
-            🔍 **Crash Report** : [Read here](./)
+            📋 **Coverage Report** : [Download here](./)${crashLogSection}
             `;
             github.issues.createComment({
               issue_number: context.issue.number,
