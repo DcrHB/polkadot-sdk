@@ -85,8 +85,8 @@ jobs:
             const comment = `
             ### Fuzzing Parameters
             🏗️ **Fuzzer** : ${ github.job }
-            ⏳ **Fuzzing Time** : ${env.TIMEOUT%m} minutes
-            👷 **No. of Jobs** : ${env.JOBS}
+            ⏳ **Fuzzing Time** : ${process.env.TIMEOUT%m} minutes
+            👷 **No. of Jobs** : ${process.env.JOBS}
             ✅ **Fuzzing Status** : \`Completed\`
 
             ### Fuzzing Report
