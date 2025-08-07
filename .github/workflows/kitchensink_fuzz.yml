@@ -70,6 +70,17 @@ jobs:
               echo "${key}=${value}" | tee -a $GITHUB_OUTPUT
             done
 
+    - name: Analyze crashes with Ziggy
+      id: crash_analysis
+      working-directory: substrate/bin/node/runtime/fuzzer
+      if: ${{ steps.file_content.outputs.saved > 0 }}
+      env:
+        SKIP_WASM_BUILD: true
+      run: |
+        echo "crash_output<<EOF" >> $GITHUB_OUTPUT
+        cargo ziggy run -i output/kitchensink-fuzzer/afl/mainaflfuzzer/crashes/ 2>&1 || echo "Failed to analyze crashes"
+        echo "EOF" >> $GITHUB_OUTPUT
+
     - name: Get Coverage Report
       run: |
         # TODO: 
@@ -84,33 +95,13 @@ jobs:
           script: |
             const timeout = process.env.TIMEOUT.replace('m', '');
             const savedCrashes = parseInt(process.env.SAVED_CRASHES) || 0;
-            const crashLogSection = savedCrashes >= 0 ? `
+            const crashLogSection = savedCrashes > 0 ? `
             
             <details>
             <summary>🔍 Crash Log (${savedCrashes} crashes found)</summary>
             
             \`\`\`
-            Crash Report Summary:
-            =====================
-            
-            Crash #1: panic at 'index out of bounds'
-              File: substrate/frame/treasury/src/lib.rs:245
-              Thread: main
-              Backtrace:
-                0: rust_begin_unwind
-                1: core::panicking::panic_fmt
-                2: treasury::pallet::spend_funds
-                3: runtime::execute_block
-            
-            Input that caused crash:
-              Size: 42 bytes
-              Hash: 0x1a2b3c4d...
-              Data: [hex dump follows]
-            
-            AFL++ Status:
-              Unique crashes: ${savedCrashes}
-              Total executions: 1,234,567
-              Executions/sec: 2,890
+            ${process.env.CRASH_OUTPUT || 'No crash analysis available'}
             \`\`\`
             
             </details>
@@ -137,3 +128,4 @@ jobs:
         FUZZ_TIME: ${{ steps.file_content.outputs.time }}
         SAVED_CRASHES: ${{ steps.file_content.outputs.saved }}
         COVERAGE: ${{ steps.file_content.outputs.reached }}
+        CRASH_OUTPUT: ${{ steps.crash_analysis.outputs.crash_output }}
