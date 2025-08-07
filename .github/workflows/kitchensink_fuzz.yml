@@ -78,7 +78,7 @@ jobs:
           github-token: ${{secrets.GITHUB_TOKEN}}
           script: |
             const comment = `
-            ## 🐛 Fuzzing Report
+            ### Fuzzing Report
             
             ⏱️ **Total Fuzzing Time (Duration)** : ${process.env.FUZZ_TIME}
             💥 **No. of Crashes found** : ${process.env.SAVED_CRASHES}
