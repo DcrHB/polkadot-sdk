@@ -82,10 +82,11 @@ jobs:
       with:
           github-token: ${{secrets.GITHUB_TOKEN}}
           script: |
+            const timeout = process.env.TIMEOUT.replace('m', '');
             const comment = `
             ### Fuzzing Parameters
             🏗️ **Fuzzer** : ${ github.job }
-            ⏳ **Fuzzing Time** : ${process.env.TIMEOUT%m} minutes
+            ⏳ **Fuzzing Time** : ${timeout} minutes
             👷 **No. of Jobs** : ${process.env.JOBS}
             ✅ **Fuzzing Status** : \`Completed\`
 
