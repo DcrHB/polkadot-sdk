@@ -41,14 +41,17 @@ jobs:
         path: substrate/bin/node/runtime/fuzzer/corpus
         key: kitchensink-corpus
     - name: Fuzz for 15 minutes
+      id: fuzz
       env:
         SKIP_WASM_BUILD: true
         AFL_I_DONT_CARE_ABOUT_MISSING_CRASHES: true
         AFL_SKIP_CPUFREQ: true
         AFLRS_REQUIRE_PLUGINS: true
         AFL_LLVM_ALLOWLIST: $(pwd)/allowlist.txt
+        JOBS: 4
+        TIMEOUT: 15m
       working-directory: substrate/bin/node/runtime/fuzzer
-      run: timeout 15m cargo ziggy fuzz -j 4 --no-honggfuzz -i corpus || [[ $? -eq 124 ]]
+      run: timeout ${{ env.TIMEOUT }} cargo ziggy fuzz -j ${{ env.JOBS }} --no-honggfuzz -i corpus || [[ $? -eq 124 ]]
     
     - name: Move new corpus for caching
       working-directory: substrate/bin/node/runtime/fuzzer
@@ -78,9 +81,14 @@ jobs:
           github-token: ${{secrets.GITHUB_TOKEN}}
           script: |
             const comment = `
+            ### Fuzzing Parameters
+            🏗️ **Fuzzer** : kitchensink-fuzz
+            ⏳ **Fuzzing Time** : ${process.env.TIMEOUT}
+            👷  **No. of Jobs** : ${process.env.JOBS}
+            ✅ **Fuzzing Status** : \`Completed\`
+
             ### Fuzzing Report
-            
-            ⏱️ **Total Fuzzing Time (Duration)** : ${process.env.FUZZ_TIME}
+            ⏱️ **Total Fuzzing Time (⏳ ✖️ 👷 )** : ${process.env.FUZZ_TIME} 
             💥 **No. of Crashes found** : ${process.env.SAVED_CRASHES}
             📊 **Coverage** : ${process.env.COVERAGE}
             📋 **Coverage Report** : [Download here](./)
@@ -96,4 +104,6 @@ jobs:
         FUZZ_TIME: ${{ steps.file_content.outputs.time }}
         SAVED_CRASHES: ${{ steps.file_content.outputs.saved }}
         COVERAGE: ${{ steps.file_content.outputs.reached }}
+        JOBS: ${{ env.JOBS }}
+        TIMEOUT: ${{ env.TIMEOUT }}
   
