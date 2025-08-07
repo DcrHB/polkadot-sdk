@@ -3,6 +3,10 @@ name: Kitchensink Fuzz
 on:
     pull_request:
 
+env:
+  JOBS: 4
+  TIMEOUT: 15m
+
 jobs:
   fuzz:
     runs-on: ubuntu-latest
@@ -48,8 +52,6 @@ jobs:
         AFL_SKIP_CPUFREQ: true
         AFLRS_REQUIRE_PLUGINS: true
         AFL_LLVM_ALLOWLIST: $(pwd)/allowlist.txt
-        JOBS: 4
-        TIMEOUT: 15m
       working-directory: substrate/bin/node/runtime/fuzzer
       run: timeout ${{ env.TIMEOUT }} cargo ziggy fuzz -j ${{ env.JOBS }} --no-honggfuzz -i corpus || [[ $? -eq 124 ]]
     
@@ -82,9 +84,9 @@ jobs:
           script: |
             const comment = `
             ### Fuzzing Parameters
-            🏗️ **Fuzzer** : kitchensink-fuzz
-            ⏳ **Fuzzing Time** : ${process.env.TIMEOUT}
-            👷  **No. of Jobs** : ${process.env.JOBS}
+            🏗️ **Fuzzer** : ${GITHUB_JOB}
+            ⏳ **Fuzzing Time** : ${env.TIMEOUT%m} minutes
+            👷 **No. of Jobs** : ${env.JOBS}
             ✅ **Fuzzing Status** : \`Completed\`
 
             ### Fuzzing Report
@@ -104,6 +106,3 @@ jobs:
         FUZZ_TIME: ${{ steps.file_content.outputs.time }}
         SAVED_CRASHES: ${{ steps.file_content.outputs.saved }}
         COVERAGE: ${{ steps.file_content.outputs.reached }}
-        JOBS: ${{ env.JOBS }}
-        TIMEOUT: ${{ env.TIMEOUT }}
-  
