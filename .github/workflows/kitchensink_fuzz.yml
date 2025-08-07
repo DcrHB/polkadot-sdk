@@ -21,10 +21,10 @@ jobs:
         key: dot-cargo
     # Workaround to afl config bug
     - run: wget -qO- https://apt.llvm.org/llvm-snapshot.gpg.key | sudo tee /etc/apt/trusted.gpg.d/apt.llvm.org.asc
-    - run: echo "deb http://apt.llvm.org/noble/ llvm-toolchain-noble-20 main" | sudo tee /etc/apt/sources.list.d/llvm.list
+    - run: echo "deb http://apt.llvm.org/noble/ llvm-toolchain-noble-21 main" | sudo tee /etc/apt/sources.list.d/llvm.list
     - run: sudo apt update
-    - run: sudo apt install llvm-20-dev
-    - run: rustup default nightly-2025-08-01
+    - run: sudo apt install llvm-21-dev
+    - run: rustup default nightly
     - run: cargo install ziggy cargo-afl
     - run: cargo afl config --build --force --plugins
 
@@ -35,7 +35,9 @@ jobs:
         key: target-${{ hashFiles('**/Cargo.lock') }}
     - name: Build fuzzer
       env:
-        SKIP_WASM_BUILD: true
+        # SKIP_WASM_BUILD: true
+        AFLRS_REQUIRE_PLUGINS: true
+        AFL_LLVM_ALLOWLIST: $(pwd)/allowlist.txt
       working-directory: substrate/bin/node/runtime/fuzzer
       run: cargo ziggy build --no-honggfuzz
 
@@ -47,7 +49,7 @@ jobs:
     - name: Fuzz for 15 minutes
       id: fuzz
       env:
-        SKIP_WASM_BUILD: true
+        # SKIP_WASM_BUILD: true
         AFL_I_DONT_CARE_ABOUT_MISSING_CRASHES: true
         AFL_SKIP_CPUFREQ: true
         AFLRS_REQUIRE_PLUGINS: true
@@ -74,8 +76,8 @@ jobs:
       id: crash_analysis
       working-directory: substrate/bin/node/runtime/fuzzer
       if: ${{ steps.file_content.outputs.saved > 0 }}
-      env:
-        SKIP_WASM_BUILD: true
+      # env:
+        # SKIP_WASM_BUILD: true
       run: |
         echo "crash_output<<EOF" >> $GITHUB_OUTPUT
         cargo ziggy run -i output/kitchensink-fuzzer/afl/mainaflfuzzer/crashes/ 2>&1 || echo "Failed to analyze crashes"
