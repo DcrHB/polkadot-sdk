@@ -5,7 +5,7 @@ on:
 
 env:
   JOBS: 4
-  TIMEOUT: 1m
+  TIMEOUT: 15m
 
 jobs:
   fuzz:
@@ -85,7 +85,7 @@ jobs:
             const timeout = process.env.TIMEOUT.replace('m', '');
             const comment = `
             ### Fuzzing Parameters
-            🏗️ **Fuzzer** : ${ github.job }
+            🏗️ **Fuzzer** : ${ process.env.GITHUB_JOB }
             ⏳ **Fuzzing Time** : ${timeout} minutes
             👷 **No. of Jobs** : ${process.env.JOBS}
             ✅ **Fuzzing Status** : \`Completed\`
