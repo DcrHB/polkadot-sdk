@@ -725,7 +725,7 @@ pub mod pallet {
 					status: PaymentState::Pending,
 				},
 			);
-			// SpendCount::<T, I>::put(index + 1);
+			SpendCount::<T, I>::put(index + 1);
 
 			Self::deposit_event(Event::AssetSpendApproved {
 				index,
