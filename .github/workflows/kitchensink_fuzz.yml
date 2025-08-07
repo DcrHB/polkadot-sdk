@@ -17,9 +17,9 @@ jobs:
         key: dot-cargo
     # Workaround to afl config bug
     - run: wget -qO- https://apt.llvm.org/llvm-snapshot.gpg.key | sudo tee /etc/apt/trusted.gpg.d/apt.llvm.org.asc
-    - run: echo "deb http://apt.llvm.org/noble/ llvm-toolchain-noble-20 main" | sudo tee /etc/apt/sources.list.d/llvm.list
+    - run: echo "deb http://apt.llvm.org/noble/ llvm-toolchain-noble-21 main" | sudo tee /etc/apt/sources.list.d/llvm.list
     - run: sudo apt update
-    - run: sudo apt install llvm-20-dev
+    - run: sudo apt install llvm-21-dev
     - run: rustup default nightly
     - run: cargo install ziggy cargo-afl
     - run: cargo afl config --build --force --plugins
