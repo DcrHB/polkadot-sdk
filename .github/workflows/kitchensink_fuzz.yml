@@ -67,16 +67,22 @@ jobs:
       id: file_content
       working-directory: substrate/bin/node/runtime/fuzzer
       run: |
-            keys=("time" "saved" "reached")
-            for key in ${keys[@]}; do
-              value=$(cargo afl whatsup -s -m output/kitchensink-fuzzer/afl/ | grep $key | awk -F: '{print $2}')
-              echo "${key}=${value}" | tee -a $GITHUB_OUTPUT
-            done
+            # Extract Total run time
+            time=$(cargo afl whatsup -s -m output/kitchensink-fuzzer/afl/ | grep "Total run time" | awk -F': ' '{print $2}' | xargs)
+            echo "time=${time}" | tee -a $GITHUB_OUTPUT
+            
+            # Extract Crashes saved
+            crashes=$(cargo afl whatsup -s -m output/kitchensink-fuzzer/afl/ | grep "Crashes saved" | awk -F': ' '{print $2}' | xargs)
+            echo "crashes=${crashes}" | tee -a $GITHUB_OUTPUT
+            
+            # Extract Coverage reached
+            reached=$(cargo afl whatsup -s -m output/kitchensink-fuzzer/afl/ | grep "Coverage reached" | awk -F': ' '{print $2}' | xargs)
+            echo "reached=${reached}" | tee -a $GITHUB_OUTPUT
 
     - name: Analyze crashes with Ziggy
       id: crash_analysis
       working-directory: substrate/bin/node/runtime/fuzzer
-      if: ${{ steps.file_content.outputs.saved > 0 }}
+      if: ${{ steps.file_content.outputs.crashes > 0 }}
       # env:
         # SKIP_WASM_BUILD: true
       run: |
@@ -129,6 +135,6 @@ jobs:
             });
       env:
         FUZZ_TIME: ${{ steps.file_content.outputs.time }}
-        SAVED_CRASHES: ${{ steps.file_content.outputs.saved }}
+        SAVED_CRASHES: ${{ steps.file_content.outputs.crashes }}
         COVERAGE: ${{ steps.file_content.outputs.reached }}
         CRASH_OUTPUT: ${{ steps.crash_analysis.outputs.crash_output }}
