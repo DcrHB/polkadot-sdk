@@ -1,1 +1,2 @@
-src:*pallet_treasury*
+*pallet_treasury*
+*kitchensink*
