@@ -65,15 +65,15 @@ jobs:
       working-directory: substrate/bin/node/runtime/fuzzer
       run: |
             # Extract Total run time
-            time=$(cargo afl whatsup -s -m output/kitchensink-fuzzer/afl/ | grep "Total run time" | awk -F': ' '{print $2}' | xargs)
+            time=$(cargo afl whatsup -s -m output/kitchensink-fuzzer/afl/ | grep "Total run time" | awk -F' : ' '{print $2}' | xargs)
             echo "time=${time}" | tee -a $GITHUB_OUTPUT
             
             # Extract Crashes saved
-            crashes=$(cargo afl whatsup -s -m output/kitchensink-fuzzer/afl/ | grep "Crashes saved" | awk -F': ' '{print $2}' | xargs)
+            crashes=$(cargo afl whatsup -s -m output/kitchensink-fuzzer/afl/ | grep "Crashes saved" | awk -F' : ' '{print $2}' | xargs)
             echo "crashes=${crashes}" | tee -a $GITHUB_OUTPUT
             
             # Extract Coverage reached
-            reached=$(cargo afl whatsup -s -m output/kitchensink-fuzzer/afl/ | grep "Coverage reached" | awk -F': ' '{print $2}' | xargs)
+            reached=$(cargo afl whatsup -s -m output/kitchensink-fuzzer/afl/ | grep "Coverage reached" | awk -F' : ' '{print $2}' | xargs)
             echo "reached=${reached}" | tee -a $GITHUB_OUTPUT
             
             # Count corpus files
