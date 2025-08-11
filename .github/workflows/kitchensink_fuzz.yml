@@ -5,7 +5,7 @@ on:
 
 env:
   JOBS: 4
-  TIMEOUT: 15m
+  TIMEOUT: 1h
 
 jobs:
   ziggy:
@@ -28,7 +28,6 @@ jobs:
     - run: cargo install ziggy cargo-afl
     - run: cargo afl config --build --force --plugins
 
-    # Build
     - name: Build fuzzer
       env:
         # SKIP_WASM_BUILD: true
@@ -37,15 +36,13 @@ jobs:
       working-directory: substrate/bin/node/runtime/fuzzer
       run: cargo ziggy build --no-honggfuzz
 
-    # Restore corpus and create basic seed
-    - uses: actions/cache@v4
+    - name: Restore corpus
+      uses: actions/cache@v4
       with:
         path: substrate/bin/node/runtime/fuzzer/corpus
         key: kitchensink-corpus
-    - run: echo 000013050002286bee00000000000000000000000000000000000000000000000000000000000000000000 | xxd -r -p > substrate/bin/node/runtime/fuzzer/corpus/spend.bin
 
-    # Fuzz
-    - name: Fuzz for 15 minutes
+    - name: Fuzz
       id: fuzz
       env:
         # SKIP_WASM_BUILD: true
