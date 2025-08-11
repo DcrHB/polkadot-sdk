@@ -25,7 +25,7 @@ jobs:
     - run: sudo apt install llvm-20-dev
     - run: rustup default nightly-2025-08-01
     - run: rustup target add wasm32v1-none
-    - run: cargo install ziggy cargo-afl honggfuzz
+    - run: cargo install ziggy cargo-afl
     - run: cargo afl config --build --force --plugins
 
     - name: Build fuzzer
@@ -34,7 +34,7 @@ jobs:
         AFLRS_REQUIRE_PLUGINS: true
         AFL_LLVM_ALLOWLIST: ${{ github.workspace }}/substrate/bin/node/runtime/fuzzer/allowlist.txt
       working-directory: substrate/bin/node/runtime/fuzzer
-      run: cargo ziggy build 
+      run: cargo ziggy build --no-honggfuzz
 
     - name: Restore corpus
       uses: actions/cache@v4
@@ -51,7 +51,7 @@ jobs:
         AFLRS_REQUIRE_PLUGINS: true
         AFL_LLVM_ALLOWLIST: ${{ github.workspace }}/substrate/bin/node/runtime/fuzzer/allowlist.txt
       working-directory: substrate/bin/node/runtime/fuzzer
-      run: timeout ${{ env.TIMEOUT }} cargo ziggy fuzz -j ${{ env.JOBS }} -i corpus -G 64 || [[ $? -eq 124 ]]
+      run: timeout ${{ env.TIMEOUT }} cargo ziggy fuzz --no-honggfuzz -j ${{ env.JOBS }} -i corpus -G 64 || [[ $? -eq 124 ]]
     
     - name: Move new corpus for caching
       working-directory: substrate/bin/node/runtime/fuzzer
