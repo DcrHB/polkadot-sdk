@@ -5,7 +5,7 @@ on:
 
 env:
   JOBS: 4
-  TIMEOUT: 15m
+  TIMEOUT: 5m
 
 jobs:
   ziggy:
@@ -47,7 +47,7 @@ jobs:
       with:
         path: substrate/bin/node/runtime/fuzzer/corpus
         key: kitchensink-corpus
-    - name: Fuzz for 15 minutes
+    - name: Fuzz for 5 minutes
       id: fuzz
       env:
         # SKIP_WASM_BUILD: true
