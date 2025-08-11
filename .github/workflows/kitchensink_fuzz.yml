@@ -25,7 +25,7 @@ jobs:
     - run: sudo apt update
     - run: sudo apt install llvm-20-dev
     - run: rustup default nightly-2025-08-01
-    - run: rustup target add wasm32v1-none
+    - run: rustup target add wasm32-unknown-unknown
     - run: cargo install ziggy cargo-afl
     - run: cargo afl config --build --force --plugins
 
@@ -78,6 +78,10 @@ jobs:
             # Extract Coverage reached
             reached=$(cargo afl whatsup -s -m output/kitchensink-fuzzer/afl/ | grep "Coverage reached" | awk -F': ' '{print $2}' | xargs)
             echo "reached=${reached}" | tee -a $GITHUB_OUTPUT
+            
+            # Count corpus files
+            corpus_count=$(find corpus -type f | wc -l)
+            echo "corpus_count=${corpus_count}" | tee -a $GITHUB_OUTPUT
 
     - name: Analyze crashes with Ziggy
       id: crash_analysis
@@ -125,6 +129,7 @@ jobs:
             ⏱️ **Total Fuzzing Time (⏳ ✖️ 👷 )** : ${process.env.FUZZ_TIME} 
             💥 **No. of Crashes found** : ${process.env.SAVED_CRASHES}
             📊 **Coverage** : ${process.env.COVERAGE}
+            🗂️ **Corpus Count** : ${process.env.CORPUS_COUNT}
             📋 **Coverage Report** : [Download here](./)${crashLogSection}
             `;
             github.issues.createComment({
@@ -137,4 +142,5 @@ jobs:
         FUZZ_TIME: ${{ steps.file_content.outputs.time }}
         SAVED_CRASHES: ${{ steps.file_content.outputs.crashes }}
         COVERAGE: ${{ steps.file_content.outputs.reached }}
+        CORPUS_COUNT: ${{ steps.file_content.outputs.corpus_count }}
         CRASH_OUTPUT: ${{ steps.crash_analysis.outputs.crash_output }}
