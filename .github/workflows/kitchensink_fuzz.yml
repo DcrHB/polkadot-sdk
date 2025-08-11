@@ -5,12 +5,11 @@ on:
 
 env:
   JOBS: 4
-  TIMEOUT: 5m
+  TIMEOUT: 15m
 
 jobs:
   ziggy:
     runs-on: ubuntu-latest
-    # runs-on: ubuntu-25.04
 
     steps:
     # Setup
@@ -44,7 +43,7 @@ jobs:
       with:
         path: substrate/bin/node/runtime/fuzzer/corpus
         key: kitchensink-corpus
-    - name: Fuzz for 5 minutes
+    - name: Fuzz for 15 minutes
       id: fuzz
       env:
         # SKIP_WASM_BUILD: true
