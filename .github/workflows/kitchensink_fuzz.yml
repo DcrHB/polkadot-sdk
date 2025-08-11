@@ -97,7 +97,7 @@ jobs:
       with:
           github-token: ${{secrets.GITHUB_TOKEN}}
           script: |
-            const timeout = process.env.TIMEOUT.replace('m', '');
+            const timeout = process.env.TIMEOUT.replace('m', ' minutes').replace('h', ' hours');
             const savedCrashes = parseInt(process.env.SAVED_CRASHES) || 0;
             const crashLogSection = savedCrashes > 0 ? `
             
@@ -113,7 +113,7 @@ jobs:
             const comment = `
             ### Fuzzing Parameters
             🏗️ **Fuzzer** : [${ process.env.GITHUB_JOB }](https://github.com/srlabs/ziggy/)
-            ⏳ **Fuzzing Time** : ${timeout} minutes
+            ⏳ **Fuzzing Time** : ${timeout}
             👷 **No. of Jobs** : ${process.env.JOBS}
 
             ### Fuzzing Report
