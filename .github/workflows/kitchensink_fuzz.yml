@@ -26,6 +26,7 @@ jobs:
     - run: rustup default nightly-2025-08-01
     - run: rustup target add wasm32v1-none
     - run: cargo install ziggy cargo-afl
+    - run: cargo afl config --build
     #- run: cargo afl config --build --force --plugins
 
     - name: Build fuzzer
