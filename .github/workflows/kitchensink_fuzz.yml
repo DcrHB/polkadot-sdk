@@ -5,7 +5,7 @@ on:
 
 env:
   JOBS: 4
-  TIMEOUT: 6h
+  TIMEOUT: 1h
 
 jobs:
   ziggy:
@@ -19,20 +19,20 @@ jobs:
         path: ~/.cargo/
         key: dot-cargo
     # Workaround to afl config bug
-    - run: wget -qO- https://apt.llvm.org/llvm-snapshot.gpg.key | sudo tee /etc/apt/trusted.gpg.d/apt.llvm.org.asc
-    - run: echo "deb http://apt.llvm.org/noble/ llvm-toolchain-noble-20 main" | sudo tee /etc/apt/sources.list.d/llvm.list
-    - run: sudo apt update
-    - run: sudo apt install llvm-20-dev
+    #- run: wget -qO- https://apt.llvm.org/llvm-snapshot.gpg.key | sudo tee /etc/apt/trusted.gpg.d/apt.llvm.org.asc
+    #- run: echo "deb http://apt.llvm.org/noble/ llvm-toolchain-noble-20 main" | sudo tee /etc/apt/sources.list.d/llvm.list
+    #- run: sudo apt update
+    #- run: sudo apt install llvm-20-dev
     - run: rustup default nightly-2025-08-01
     - run: rustup target add wasm32v1-none
     - run: cargo install ziggy cargo-afl
-    - run: cargo afl config --build --force --plugins
+    #- run: cargo afl config --build --force --plugins
 
     - name: Build fuzzer
       env:
         # SKIP_WASM_BUILD: true
-        AFLRS_REQUIRE_PLUGINS: true
-        AFL_LLVM_ALLOWLIST: ${{ github.workspace }}/substrate/bin/node/runtime/fuzzer/allowlist.txt
+        #AFLRS_REQUIRE_PLUGINS: true
+        #AFL_LLVM_ALLOWLIST: ${{ github.workspace }}/substrate/bin/node/runtime/fuzzer/allowlist.txt
       working-directory: substrate/bin/node/runtime/fuzzer
       run: cargo ziggy build --no-honggfuzz
 
@@ -48,8 +48,8 @@ jobs:
         # SKIP_WASM_BUILD: true
         AFL_I_DONT_CARE_ABOUT_MISSING_CRASHES: true
         AFL_SKIP_CPUFREQ: true
-        AFLRS_REQUIRE_PLUGINS: true
-        AFL_LLVM_ALLOWLIST: ${{ github.workspace }}/substrate/bin/node/runtime/fuzzer/allowlist.txt
+        # AFLRS_REQUIRE_PLUGINS: true
+        # AFL_LLVM_ALLOWLIST: ${{ github.workspace }}/substrate/bin/node/runtime/fuzzer/allowlist.txt
       working-directory: substrate/bin/node/runtime/fuzzer
       run: timeout ${{ env.TIMEOUT }} cargo ziggy fuzz --no-honggfuzz -j ${{ env.JOBS }} -i corpus -G 64 || [[ $? -eq 124 ]]
     
