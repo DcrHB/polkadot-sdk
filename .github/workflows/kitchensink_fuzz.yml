@@ -34,7 +34,7 @@ jobs:
       env:
         # SKIP_WASM_BUILD: true
         AFLRS_REQUIRE_PLUGINS: true
-        #AFL_LLVM_ALLOWLIST: ${{ github.workspace }}/substrate/bin/node/runtime/fuzzer/allowlist.txt
+        AFL_LLVM_ALLOWLIST: ${{ github.workspace }}/substrate/bin/node/runtime/fuzzer/allowlist.txt
       working-directory: substrate/bin/node/runtime/fuzzer
       run: cargo ziggy build --no-honggfuzz
 
@@ -52,7 +52,7 @@ jobs:
         AFL_SKIP_CPUFREQ: true
         AFL_NO_AFFINITY: true
         AFLRS_REQUIRE_PLUGINS: true
-        # AFL_LLVM_ALLOWLIST: ${{ github.workspace }}/substrate/bin/node/runtime/fuzzer/allowlist.txt
+        AFL_LLVM_ALLOWLIST: ${{ github.workspace }}/substrate/bin/node/runtime/fuzzer/allowlist.txt
       working-directory: substrate/bin/node/runtime/fuzzer
       run: timeout ${{ env.TIMEOUT }} cargo ziggy fuzz --no-honggfuzz -j ${{ env.JOBS }} -i corpus -G 64 || [[ $? -eq 124 ]]
     
