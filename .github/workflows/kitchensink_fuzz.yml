@@ -5,7 +5,7 @@ on:
 
 env:
   JOBS: 10
-  TIMEOUT: 2h
+  TIMEOUT: 4h
 
 jobs:
   ziggy:
