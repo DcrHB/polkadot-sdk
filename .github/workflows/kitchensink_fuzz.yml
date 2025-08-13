@@ -4,7 +4,7 @@ on:
     pull_request:
 
 env:
-  JOBS: 16
+  JOBS: 10
   TIMEOUT: 2h
 
 jobs:
@@ -23,10 +23,11 @@ jobs:
     #- run: echo "deb http://apt.llvm.org/noble/ llvm-toolchain-noble-20 main" | sudo tee /etc/apt/sources.list.d/llvm.list
     #- run: sudo apt update
     #- run: sudo apt install llvm-20-dev
-    - run: rustup default nightly-2025-08-01
+    - run: rustup default nightly
+    # - run: rustup default nightly-2025-08-01
     - run: rustup target add wasm32v1-none
     - run: cargo install ziggy cargo-afl
-    - run: cargo afl config --build
+    - run: cargo afl config --build --force --plugins
     #- run: cargo afl config --build --force --plugins
 
     - name: Build fuzzer
