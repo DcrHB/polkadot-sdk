@@ -4,8 +4,8 @@ on:
     pull_request:
 
 env:
-  JOBS: 16
-  TIMEOUT: 1h
+  JOBS: 4
+  TIMEOUT: 2h
 
 jobs:
   ziggy:
