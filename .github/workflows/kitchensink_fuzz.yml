@@ -3,8 +3,12 @@ name: Kitchensink Fuzz
 on:
     pull_request:
 
+env:
+  JOBS: 10
+  TIMEOUT: 1h
+
 jobs:
-  fuzz:
+  ziggy:
     runs-on: ubuntu-latest
 
     steps:
@@ -14,42 +18,69 @@ jobs:
       with:
         path: ~/.cargo/
         key: dot-cargo
+    # Workaround to afl config bug
+    - run: wget -qO- https://apt.llvm.org/llvm-snapshot.gpg.key | sudo tee /etc/apt/trusted.gpg.d/apt.llvm.org.asc
+    - run: echo "deb http://apt.llvm.org/noble/ llvm-toolchain-noble-21 main" | sudo tee /etc/apt/sources.list.d/llvm.list
+    - run: sudo apt update
+    - run: sudo apt install llvm-21-dev
+    - run: rustup default nightly
+    - run: rustup target add wasm32v1-none
     - run: cargo install ziggy cargo-afl
-    - run: cargo afl config --build --force
+    - run: cargo afl config --build --force --plugins
 
-    # Build
-    - uses: actions/cache@v4
-      with:
-        path: substrate/bin/node/runtime/fuzzer/target
-        key: target-${{ hashFiles('**/Cargo.lock') }}
     - name: Build fuzzer
       env:
-        SKIP_WASM_BUILD: true
+        AFLRS_REQUIRE_PLUGINS: true
+        AFL_LLVM_ALLOWLIST: ${{ github.workspace }}/substrate/bin/node/runtime/fuzzer/allowlist.txt
       working-directory: substrate/bin/node/runtime/fuzzer
       run: cargo ziggy build --no-honggfuzz
 
-    # Fuzz
-    - uses: actions/cache@v4
+    - name: Restore corpus
+      uses: actions/cache@v4
       with:
-        path: substrate/bin/node/runtime/fuzzer/output/kitchensink-fuzzer/corpus
+        path: substrate/bin/node/runtime/fuzzer/corpus
         key: kitchensink-corpus
-    - name: Fuzz for 5 minutes
+
+    - name: Fuzz
+      id: fuzz
       env:
-        SKIP_WASM_BUILD: true
         AFL_I_DONT_CARE_ABOUT_MISSING_CRASHES: true
         AFL_SKIP_CPUFREQ: true
+        AFL_NO_AFFINITY: true
+        AFLRS_REQUIRE_PLUGINS: true
+        AFL_LLVM_ALLOWLIST: ${{ github.workspace }}/substrate/bin/node/runtime/fuzzer/allowlist.txt
       working-directory: substrate/bin/node/runtime/fuzzer
-      run: timeout 1m cargo ziggy fuzz || [[ $? -eq 124 ]]
+      run: timeout ${{ env.TIMEOUT }} cargo ziggy fuzz --no-honggfuzz -j ${{ env.JOBS }} -i corpus -G 64 || [[ $? -eq 124 ]]
+    
+    - name: Move new corpus for caching
+      working-directory: substrate/bin/node/runtime/fuzzer
+      run: mkdir -p corpus && mv corpus corpus_old && mv output/kitchensink-fuzzer/afl/mainaflfuzzer/queue corpus
 
     # Finally extract fuzzer metrics from fuzzer status 
     - name: Read Fuzzer metrics for status
       id: file_content
+      working-directory: substrate/bin/node/runtime/fuzzer
       run: |
-            keys=("fuzz_time" "saved_crashes" "edges_found" "total_edges")
-            for key in ${keys[@]}; do
-              value=$(cat substrate/bin/node/runtime/fuzzer/output/kitchensink-fuzzer/afl/mainaflfuzzer/fuzzer_stats | grep $key | awk -F: '{print $2}')
-              echo "${key}=${value}" | tee -a $GITHUB_OUTPUT
-            done
+            # Extract Crashes saved
+            crashes=$(cargo afl whatsup -s -m output/kitchensink-fuzzer/afl/ | grep "Crashes saved" | awk -F' : ' '{print $2}' | xargs)
+            echo "crashes=${crashes}" | tee -a $GITHUB_OUTPUT
+            
+            # Extract Coverage reached
+            reached=$(cargo afl whatsup -s -m output/kitchensink-fuzzer/afl/ | grep "Coverage reached" | awk -F' : ' '{print $2}' | xargs)
+            echo "reached=${reached}" | tee -a $GITHUB_OUTPUT
+            
+            # Count corpus files
+            corpus_count=$(find corpus -type f | wc -l)
+            echo "corpus_count=${corpus_count}" | tee -a $GITHUB_OUTPUT
+
+    - name: Analyze crashes with Ziggy
+      id: crash_analysis
+      working-directory: substrate/bin/node/runtime/fuzzer
+      if: ${{ steps.file_content.outputs.crashes > 0 }}
+      run: |
+        echo "crash_output<<EOF" >> $GITHUB_OUTPUT
+        cargo ziggy run -i output/kitchensink-fuzzer/afl/mainaflfuzzer/crashes/ 2>&1 || echo "Failed to analyze crashes"
+        echo "EOF" >> $GITHUB_OUTPUT
 
     - name: Get Coverage Report
       run: |
@@ -57,20 +88,35 @@ jobs:
         # This is a placeholder to get gcov report
 
     - name: Post comment on the PR
-      # FIXME: Remove gurard condition once the action is finlaised to only for PR
       if: github.event_name == 'pull_request'
       uses: actions/github-script@v3
       with:
           github-token: ${{secrets.GITHUB_TOKEN}}
           script: |
+            const timeout = process.env.TIMEOUT.replace('m', ' minutes').replace('h', ' hours');
+            const savedCrashes = parseInt(process.env.SAVED_CRASHES) || 0;
+            const crashLogSection = savedCrashes > 0 ? `
+            
+            <details>
+            <summary>🔍 Crash Log (${savedCrashes} crashes found)</summary>
+            
+            \`\`\`
+            ${process.env.CRASH_OUTPUT || 'No crash analysis available'}
+            \`\`\`
+            
+            </details>
+            ` : '';
             const comment = `
-            **Total Fuzzing Time (Duration)** : ${process.env.FUZZ_TIME}
-            **No. of Crashes found** : ${process.env.SAVED_CRASHES}
-            **Explored Edges** : ${process.env.EDGES_FOUND}
-            **Total Edges** : ${process.env.TOTAL_EDGES}
-            **Coverage** : ${(parseInt(process.env.EDGES_FOUND)/parseInt(process.env.TOTAL_EDGES)*100).toFixed(2)}%
-            **Coverage Report** : Download here
-            **Crash Report** : Refer here
+            ### Fuzzing Parameters
+            🏗️ **Fuzzer** : [${ process.env.GITHUB_JOB }](https://github.com/srlabs/ziggy/)
+            ⏳ **Fuzzing Time** : ${timeout}
+            👷 **No. of Jobs** : ${process.env.JOBS}
+
+            ### Fuzzing Report
+            💥 **No. of Crashes found** : ${process.env.SAVED_CRASHES}
+            📊 **Coverage** : ${process.env.COVERAGE}
+            🗂️ **Corpus Count** : ${process.env.CORPUS_COUNT}
+            📋 **Coverage Report** : [Download here](./)${crashLogSection}
             `;
             github.issues.createComment({
               issue_number: context.issue.number,
@@ -79,8 +125,7 @@ jobs:
               body: comment
             });
       env:
-        FUZZ_TIME: ${{ steps.file_content.outputs.fuzz_time }}
-        SAVED_CRASHES: ${{ steps.file_content.outputs.saved_crashes }}
-        EDGES_FOUND: ${{ steps.file_content.outputs.edges_found }}
-        TOTAL_EDGES: ${{ steps.file_content.outputs.total_edges }}
-  
+        SAVED_CRASHES: ${{ steps.file_content.outputs.crashes }}
+        COVERAGE: ${{ steps.file_content.outputs.reached }}
+        CORPUS_COUNT: ${{ steps.file_content.outputs.corpus_count }}
+        CRASH_OUTPUT: ${{ steps.crash_analysis.outputs.crash_output }}
