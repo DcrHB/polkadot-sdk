@@ -5,7 +5,7 @@ on:
 
 env:
   JOBS: 10
-  TIMEOUT: 4h
+  TIMEOUT: 1h
 
 jobs:
   ziggy:
@@ -24,15 +24,12 @@ jobs:
     - run: sudo apt update
     - run: sudo apt install llvm-21-dev
     - run: rustup default nightly
-    # - run: rustup default nightly-2025-08-01
     - run: rustup target add wasm32v1-none
     - run: cargo install ziggy cargo-afl
     - run: cargo afl config --build --force --plugins
-    #- run: cargo afl config --build --force --plugins
 
     - name: Build fuzzer
       env:
-        # SKIP_WASM_BUILD: true
         AFLRS_REQUIRE_PLUGINS: true
         AFL_LLVM_ALLOWLIST: ${{ github.workspace }}/substrate/bin/node/runtime/fuzzer/allowlist.txt
       working-directory: substrate/bin/node/runtime/fuzzer
@@ -47,7 +44,6 @@ jobs:
     - name: Fuzz
       id: fuzz
       env:
-        # SKIP_WASM_BUILD: true
         AFL_I_DONT_CARE_ABOUT_MISSING_CRASHES: true
         AFL_SKIP_CPUFREQ: true
         AFL_NO_AFFINITY: true
@@ -81,8 +77,6 @@ jobs:
       id: crash_analysis
       working-directory: substrate/bin/node/runtime/fuzzer
       if: ${{ steps.file_content.outputs.crashes > 0 }}
-      # env:
-        # SKIP_WASM_BUILD: true
       run: |
         echo "crash_output<<EOF" >> $GITHUB_OUTPUT
         cargo ziggy run -i output/kitchensink-fuzzer/afl/mainaflfuzzer/crashes/ 2>&1 || echo "Failed to analyze crashes"
@@ -94,7 +88,6 @@ jobs:
         # This is a placeholder to get gcov report
 
     - name: Post comment on the PR
-      # FIXME: Remove gurard condition once the action is finlaised to only for PR
       if: github.event_name == 'pull_request'
       uses: actions/github-script@v3
       with:
