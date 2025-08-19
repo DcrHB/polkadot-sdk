@@ -5,7 +5,7 @@ on:
 
 env:
   JOBS: 1
-  TIMEOUT: 1h
+  TIMEOUT: 5m
 
 jobs:
   ziggy:
@@ -78,9 +78,7 @@ jobs:
       working-directory: substrate/bin/node/runtime/fuzzer
       if: ${{ steps.file_content.outputs.crashes > 0 }}
       run: |
-        echo "crash_output<<EOF" >> $GITHUB_OUTPUT
-        cargo ziggy run -i output/kitchensink-fuzzer/afl/mainaflfuzzer/crashes/ 2>&1 || echo "Failed to analyze crashes"
-        echo "EOF" >> $GITHUB_OUTPUT
+        echo "crash_output=$(cargo ziggy run -i output/kitchensink-fuzzer/afl/mainaflfuzzer/crashes/)" >> "$GITHUB_OUTPUT"
 
     - name: Get Coverage Report
       run: |
@@ -98,7 +96,7 @@ jobs:
             const crashLogSection = savedCrashes > 0 ? `
             
             <details>
-            <summary>🔍 Crash Log (${savedCrashes} crashes found)</summary>
+            <summary>🔍 Crash Log</summary>
             
             \`\`\`
             ${process.env.CRASH_OUTPUT || 'No crash analysis available'}
