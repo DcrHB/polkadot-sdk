@@ -4,7 +4,7 @@ on:
     pull_request:
 
 env:
-  JOBS: 10
+  JOBS: 1
   TIMEOUT: 1h
 
 jobs:
@@ -46,7 +46,7 @@ jobs:
       env:
         AFL_I_DONT_CARE_ABOUT_MISSING_CRASHES: true
         AFL_SKIP_CPUFREQ: true
-        AFL_NO_AFFINITY: true
+        # AFL_NO_AFFINITY: true
         AFLRS_REQUIRE_PLUGINS: true
         AFL_LLVM_ALLOWLIST: ${{ github.workspace }}/substrate/bin/node/runtime/fuzzer/allowlist.txt
       working-directory: substrate/bin/node/runtime/fuzzer
