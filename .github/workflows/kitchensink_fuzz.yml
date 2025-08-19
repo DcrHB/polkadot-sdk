@@ -4,7 +4,7 @@ on:
     pull_request:
 
 env:
-  JOBS: 10
+  JOBS: 1
   TIMEOUT: 1h
 
 jobs:
@@ -46,7 +46,7 @@ jobs:
       env:
         AFL_I_DONT_CARE_ABOUT_MISSING_CRASHES: true
         AFL_SKIP_CPUFREQ: true
-        AFL_NO_AFFINITY: true
+        # AFL_NO_AFFINITY: true
         AFLRS_REQUIRE_PLUGINS: true
         AFL_LLVM_ALLOWLIST: ${{ github.workspace }}/substrate/bin/node/runtime/fuzzer/allowlist.txt
       working-directory: substrate/bin/node/runtime/fuzzer
@@ -62,7 +62,7 @@ jobs:
       working-directory: substrate/bin/node/runtime/fuzzer
       run: |
             # Extract Crashes saved
-            crashes=$(cargo afl whatsup -s -m output/kitchensink-fuzzer/afl/ | grep "Crashes saved" | awk -F' : ' '{print $2}' | xargs)
+            crashes=$(find output/kitchensink-fuzzer/afl/mainaflfuzzer/crashes/id* -type f | wc -l)
             echo "crashes=${crashes}" | tee -a $GITHUB_OUTPUT
             
             # Extract Coverage reached
