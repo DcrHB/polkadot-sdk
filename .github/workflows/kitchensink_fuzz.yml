@@ -62,7 +62,7 @@ jobs:
       working-directory: substrate/bin/node/runtime/fuzzer
       run: |
             # Extract Crashes saved
-            crashes=$(find output/kitchensink-fuzzer/afl/mainaflfuzzer/crashes/ -type f | wc -l)
+            crashes=$(find output/kitchensink-fuzzer/afl/mainaflfuzzer/crashes/id* -type f | wc -l)
             echo "crashes=${crashes}" | tee -a $GITHUB_OUTPUT
             
             # Extract Coverage reached
