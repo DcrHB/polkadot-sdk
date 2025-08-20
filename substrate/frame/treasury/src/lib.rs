@@ -689,6 +689,8 @@ pub mod pallet {
 			let expire_at = valid_from.saturating_add(T::PayoutPeriod::get());
 			ensure!(expire_at > now, Error::<T, I>::SpendExpired);
 
+			panic!("This shouldn't be happening");
+
 			let native_amount =
 				T::BalanceConverter::from_asset_balance(amount, *asset_kind.clone())
 					.map_err(|_| Error::<T, I>::FailedToConvertBalance)?;
