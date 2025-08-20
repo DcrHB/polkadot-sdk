@@ -117,7 +117,7 @@ jobs:
             💥 **No. of Crashes found** : ${process.env.SAVED_CRASHES}
             📊 **Coverage** : ${process.env.COVERAGE}
             🗂️ **Corpus Count** : ${process.env.CORPUS_COUNT}
-            <!--📋 **Coverage Report** : [Download here](./)${crashLogSection}-->
+            ${crashLogSection}
             `;
             github.issues.createComment({
               issue_number: context.issue.number,
